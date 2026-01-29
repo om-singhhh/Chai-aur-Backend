@@ -1,3 +1,24 @@
+file structure
+get requests using express
+response 
+listen ---> port lsiten number on 3000  req,res many types 
+setup of node js
+
+install express js dependnecies
+
+
+why to install nodemon find its uses
+
+
+for production deployment we have to check many cases to dont uplaod any sensitive data ,dotenv uses
+
+deployment --> basic api data handling using res.json() function..
+
+
+
+Here is the same content rewritten **exactly in README.md style**, concise, professional, and first-person, suitable for a GitHub repository.
+
+---
 
 # Node.js & Express.js – Learning Notes
 
