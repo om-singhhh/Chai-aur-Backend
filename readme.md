@@ -1,24 +1,3 @@
-file structure
-get requests using express
-response 
-listen ---> port lsiten number on 3000  req,res many types 
-setup of node js
-
-install express js dependnecies
-
-
-why to install nodemon find its uses
-
-
-for production deployment we have to check many cases to dont uplaod any sensitive data ,dotenv uses
-
-deployment --> basic api data handling using res.json() function..
-
-
-
-Here is the same content rewritten **exactly in README.md style**, concise, professional, and first-person, suitable for a GitHub repository.
-
----
 
 # Node.js & Express.js – Learning Notes
 
@@ -212,3 +191,10 @@ These steps help maintain security and reliability in production.
 ---
 
 This README serves as a reference for my backend learning progress and future revisions.
+
+
+
+
+<!-- Day 2 of practicing Backend concepts -->
+
+installing axios to fetch data from backend this is to handle web request , change in api , production level features 
