@@ -1,28 +1,28 @@
-file structure
-get requests using express
-response 
-listen ---> port lsiten number on 3000  req,res many types 
-setup of node js
-
-install express js dependnecies
-
-
-why to install nodemon find its uses
-
-
-for production deployment we have to check many cases to dont uplaod any sensitive data ,dotenv uses
-
-deployment --> basic api data handling using res.json() function..
-
-
-
-Here is the same content rewritten **exactly in README.md style**, concise, professional, and first-person, suitable for a GitHub repository.
-
----
-
 # Node.js & Express.js – Learning Notes
 
 This README documents the core concepts I learned while getting started with **Node.js** and **Express.js**, focusing on API creation, request handling, and deployment best practices.
+
+---
+
+## Index of Learning
+
+- [Node.js Setup](#nodejs-setup)
+- [Installing Express.js](#installing-expressjs)
+- [Basic File Structure](#basic-file-structure)
+- [Creating an Express Server](#creating-an-express-server)
+- [Handling Requests and Responses](#handling-requests-and-responses)
+- [API Responses Using res.json()](#api-responses-using-resjson)
+- [Using Nodemon](#using-nodemon)
+- [Environment Variables with dotenv](#environment-variables-with-dotenv)
+- [Production Deployment Considerations](#production-deployment-considerations)
+- [Conclusion](#conclusion)
+- [Day 2: Full Stack Integration](#day-2-full-stack-integration-backend--frontend)
+  - [Module Systems: CommonJS vs ES Modules](#1-module-systems-commonjs-vs-es-modules)
+  - [Creating the Jokes API](#2-creating-the-jokes-api)
+  - [Connecting Frontend with Backend](#3-connecting-frontend-with-backend)
+  - [Using a Proxy in Vite](#4-using-a-proxy-in-vite-development)
+  - [Frontend Common Mistakes](#5-frontend-common-mistakes)
+  - [Summary](#6-summary)
 
 ---
 
