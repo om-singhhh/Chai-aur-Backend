@@ -23,6 +23,10 @@ This README documents the core concepts I learned while getting started with **N
   - [Using a Proxy in Vite](#4-using-a-proxy-in-vite-development)
   - [Frontend Common Mistakes](#5-frontend-common-mistakes)
   - [Summary](#6-summary)
+- [Day 3: Data Modeling with Mongoose](#day-3-data-modeling-with-mongoose)
+  - [Mongoose & Schemas](#1-mongoose--schemas)
+  - [Key Concepts in Data Modeling](#2-key-concepts-in-data-modeling)
+  - [Handling Relationships](#3-handling-relationships)
 
 ---
 
@@ -351,3 +355,75 @@ When fetching data in React:
 -   **CORS:** Understood why it happens and how to solve it.
 -   **Proxy:** Configured Vite proxy to handle cross-origin requests during development.
  
+ # Day 3: Data Modeling with Mongoose
+
+This section focuses on defining the structure of our data using Mongoose models. We covered creating Schemas, handling relationships between models, and using standard data validation.
+
+## 1. Mongoose & Schemas
+
+Mongoose is an Object Data Modeling (ODM) library for MongoDB and Node.js. It manages relationships between data, provides schema validation, and is used to translate between objects in code and the representation of those objects in MongoDB.
+
+### Defining a Schema
+A Schema maps to a MongoDB collection and defines the shape of the documents within that collection.
+
+```javascript
+import mongoose from "mongoose";
+
+const userSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true
+    },
+    password: {
+        type: String,
+        required: [true, "Password is required"] // Custom error message
+    }
+}, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
+```
+
+## 2. Key Concepts in Data Modeling
+
+### Validation
+Mongoose provides built-in validators:
+- `required`: Ensures the field is present.
+- `unique`: Ensures the value is unique in the collection.
+- `min`/`max`: For numbers.
+- `enum`: Limits the value to a specific set of strings.
+
+### Timestamps
+Passing `{ timestamps: true }` as the second argument to the Schema constructor automatically adds `createdAt` and `updatedAt` properties to the document.
+
+### Exporting Models
+It is standard practice to export the model based on the schema.
+```javascript
+export const User = mongoose.model("User", userSchema);
+```
+> **Note:** The string "User" will be automatically pluralized and lowercased by Mongoose to look for the "users" collection in the database.
+
+## 3. Handling Relationships
+
+To link documents (like a Todo belonging to a User), we use `mongoose.Schema.Types.ObjectId` and the `ref` property.
+
+### Example: Todo Model with User Reference
+```javascript
+const todoSchema = new mongoose.Schema({
+    content: {
+        type: String,
+        required: true
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User" // Must match the model name exported in User model
+    },
+    subTodos: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "SubTodo"
+        }
+    ]
+}, { timestamps: true });
+```
+
+This allows us to use `.populate()` later to automatically replace the `createdBy` ID with the actual User document.
