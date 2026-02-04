@@ -27,6 +27,7 @@ This README documents the core concepts I learned while getting started with **N
   - [Mongoose & Schemas](#1-mongoose--schemas)
   - [Key Concepts in Data Modeling](#2-key-concepts-in-data-modeling)
   - [Handling Relationships](#3-handling-relationships)
+  - [Practical Examples: Hospital & E-Commerce Models](#4-practical-examples-hospital--e-commerce-models)
 
 ---
 
@@ -427,3 +428,34 @@ const todoSchema = new mongoose.Schema({
 ```
 
 This allows us to use `.populate()` later to automatically replace the `createdBy` ID with the actual User document.
+
+## 4. Practical Examples: Hospital & E-Commerce Models
+
+We implemented two complex data models to practice identifying entities and relationships.
+
+### [Hospital Management Models](Day3/backend/models/Hospital%20Management)
+
+This system models the relationship between hospitals, doctors, patients, and their records.
+
+*   **Hospital Model**: Stores basic details like name, address, and specializations.
+*   **Doctor Model**: Includes professional details (salary, qualification) and references the `Hospital` they work for.
+    *   **Relationship**: One-to-Many (One Hospital has many Doctors).
+    *   **Implementation**: Using `ref: 'Hospital'` in the Doctor schema.
+*   **Patient & Medical Records**: (Inferred) Patients have medical records which are created by doctors.
+
+**Key Takeaway**: The `Hospital` reference in the `Doctor` model allows us to easily query all doctors working at a specific hospital or find the hospital of a specific doctor.
+
+### [E-Commerce Models](Day3/backend/models/E-Commerce)
+
+This system is slightly more complex, involving products, categories, users, and orders.
+
+*   **User Model**: Standard user management (customers/sellers).
+*   **Product Model**: Represents items for sale.
+    *   **CategoryId**: Links to a `Category` model to organize products.
+    *   **Owner**: Links to a `User` (the seller/admin).
+    *   **Images**: Notes in the code suggest using services like Cloudinary/AWS S3 for storing image URLs instead of binary data in MongoDB.
+*   **Order Model**: Represents a purchase.
+    *   **Status Enum**: Uses `enum: ["Pending", "Cancelled", "Delivered"]` to restrict order states.
+    *   **Order Items**: Instead of a simple array of IDs, we use a **sub-schema** (`orderItemSchema`) to store both the `productId` and the `quantity` for that specific order. This is a crucial pattern for e-commerce.
+
+**Key Takeaway**: The "Order Item" pattern avoids creating a separate collection for just linking products to orders, keeping the data queryable and efficient.
