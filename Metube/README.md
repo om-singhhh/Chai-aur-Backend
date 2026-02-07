@@ -34,42 +34,171 @@ Because database operations are unpredictable, we wrap them in:
 
 ## 🔍 Code Walkthrough & Explanation
 
-### File: `src/db/server.js` (Database Logic)
+This section explains the core files of the backend logic, updated with the latest implementation.
 
-This file handles the actual connection to the MongoDB database.
+### 1. Constants (`src/constants.js`)
+A simple file to define the database name, ensuring consistency across the project.
 
-| Line | Code | Explanation |
-| :--- | :--- | :--- |
-| **1-2** | `import mongoose...` | importing Mongoose (ODM) and the specific DB name constant. |
-| **4** | `const connectDB = async () => {` | Define an asynchronous function because DB connections take time. |
-| **5** | `try {` | Start a standard error handling block. |
-| **10** | `await mongoose.connect(...)` | The critical line. We wait (`await`) for Mongoose to connect to the URL specified in `.env` combined with the `DB_NAME`. |
-| **12** | `console.log(...)` | specific log to confirm success. We print `connectionInstance.connection.host` to know exactly **which database host** we are connected to (Production vs Dev vs Local). |
-| **16** | `catch (error) {` | Catches any errors during the connection attempt (e.g., wrong password, network down). |
-| **17** | `console.log(...)` | Logs the specific error message for debugging. |
-| **18** | `process.exit(1)` | **Critical**: If the DB connection fails, the app cannot run. We forcibly exit the Node.js process with code `1` (which signifies an error). |
-| **22** | `export default connectDB` | Exports the function so it can be used in the main entry file. |
+```javascript
+export const DB_NAME = "metube";
+```
 
-**User Note**: *`connectionInstance.connection.host` is used specifically to verify the server instance we are connected to, avoiding confusion between development and production databases.*
+### 2. Application Configuration (`src/app.js`)
+This file configures the Express application with necessary middlewares.
 
----
+**Key Theoretical Concepts:**
+*   **Express & Middleware**: `app.use()` is used to configure middleware. Middleware functions have access to the request (`req`), response (`res`), and the `next` middleware function in the application’s request-response cycle.
+*   **CORS (Cross-Origin Resource Sharing)**: Essential for connecting the frontend to the backend. We configure it to allow requests from our `CORS_ORIGIN` and specifically set `credentials: true` to handle secure cookies.
+*   **Data Parsing**:
+    *   In older Express versions, we used `body-parser`. Now, Express has built-in middleware.
+    *   `express.json({limit: "16kb"})`: Parses incoming JSON requests (e.g., from forms or API calls). We limit the size to avoid server overload.
+    *   `express.urlencoded({extended: true})`: Parses data coming from URLs (e.g., search parameters).
+*   **Static Assets**: `express.static("public")` serves static files like images or stylesheets.
+*   **Cookie Parser**: Used to access and set cookies in the user's browser securely.
 
-### File: `src/server.js` (Main Entry Point)
+```javascript
+import express from "express";
+import cors from "cors";
+import cokkieParser from "cokkie-parser"; // Note: Check your package name here
 
-This is the entry point of the application that orchestrates the startup.
+const app = express();
 
-| Line | Code | Explanation |
-| :--- | :--- | :--- |
-| **4** | `import dotenv from "dotenv";` | Imports the package to manage environment variables. |
-| **5** | `import connectDB from ...` | Imports the DB connection function we defined in the other file. |
-| **8-10**| `dotenv.config(...)` | Loads the variables from `./.env`. This is done **first** to ensure `process.env` is populated before `connectDB` runs. |
-| **12** | `connectDB();` | Executes the database connection function. The app starts running its logic here. |
-| **14+** | `/* ... */` | (Commented out code) Contains the "Basic Approach" logic for reference, showing how we evolved from a simple IIFE to the current modular structure. |
+app.use(cors({
+    origin: process.env.CORS_ORIGIN,
+    credentials: true
+}))
+
+app.use(express.json({limit: "16kb"}));
+app.use(express.urlencoded({extended: true, limit: "16kb"}))
+app.use(express.static("public"))
+app.use(cokkieParser())
+
+export { app }
+```
+
+### 3. Utilities (`src/utils`)
+We created a dedicated `utils` folder to keep our code modular, reusable, and cleaner. This includes standardizing errors and responses.
+
+#### `asyncHandler.js`
+A higher-order function that wraps asynchronous route handlers. It avoids the repetitive need for `try-catch` blocks in every controller by automatically passing errors to the `next()` middleware.
+
+```javascript
+const asyncHandler = (requestHandler) => {
+    (req,res,next)=>{
+        Promise.resolve(requestHandler(req,res,next))
+        .catch((error)=>next(error))
+    }
+}
+
+export {asyncHandler}
+```
+
+#### `ApiError.js`
+A custom class extending the built-in `Error` class. This ensures that every error sent from our backend has a consistent structure (statusCode, message, success: false, etc.), making it easier for the frontend to handle.
+
+```javascript
+class ApiError extends Error{
+    constructor(
+        statusCode,
+        message="Something went Wrong",
+        errors =[],
+        stack =""
+    ){
+        super(message)
+        this.statusCode=statusCode,
+        this.data =null
+        this.message = message,
+        this.success = false,
+        this.errors = errors
+
+        if(stack){
+            this.stack = stack
+
+        }else{
+            Error.captureStackTrace(this,this.constructor)
+        }
+
+    }
+}
+
+export {ApiError}
+```
+
+#### `ApiResponse.js`
+A standard class for sending successful responses. This guarantees that all success responses form a predictable structure (statusCode, data, message, success: true).
+
+```javascript
+class ApiResponse {
+    constructor(statusCode,data,message="Success"){
+        this.statusCode = statusCode,
+        this.data = data,
+        this.message =message,
+        this.success = statusCode < 400
+    }
+}
+```
+
+### 4. Database Connection (`src/db/server.js`)
+This file handles the actual connection to the MongoDB database using Mongoose. It follows a professional approach by isolating the database logic.
+
+```javascript
+import mongoose from "mongoose";
+import { DB_NAME } from "../constants.js";
+
+const connectDB = async () => {
+    try {
+        const connectionInstance = await mongoose.connect(`${process.env.MONGO_URL}/${DB_NAME}`);
+        console.log(`\n MongoDb connected !! DB Host ${connectionInstance.connection.host}`);
+    }
+    catch (error) {
+        console.log("Mongo Db connection error", error);
+        process.exit(1)
+    }
+}
+
+export default connectDB
+```
+
+### 4. Server Entry Point (`src/server.js`)
+The main entry point triggers the database connection first. Only upon a successful connection does the server start listening.
+
+```javascript
+import dotenv from "dotenv";
+import connectDB from "./db/server.js";
+// Ensure 'app' is imported if you are using it (e.g., import { app } from "./app.js")
+
+dotenv.config({
+    path: './.env'
+});
+
+connectDB()
+.then(() => {
+    app.listen(process.env.PORT || 8000, () => {
+        console.log(`Server is serving at: ${process.env.PORT}`)
+    })
+})
+.catch((error) => {
+    console.log("MongoDB connection failed", error);
+})
+```
 
 ---
 
 ## 🚀 How to Run
-1. Ensure MongoDB URI is in `.env`.
-2. Run `npm run dev`.
-3. Check the terminal for:
-   > MongoDb connected !! DB Host [your-cluster-host]
+
+1.  **Clone the repository**.
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+3.  **Set up Environment Variables**:
+    Create a `.env` file in the root directory with the following variables:
+    ```env
+    PORT=8000
+    MONGO_URL=your_mongodb_connection_string
+    CORS_ORIGIN=*
+    ```
+4.  **Run the Server**:
+    ```bash
+    npm run dev
+    ```
