@@ -1,27 +1,105 @@
 import mongoose from "mongoose"
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+
 
 const userSchema = new mongoose.Schema(
     {
-        name : {
+        username : {
             type : String,
             required :true,
+            unique : true,
+            lowercase : true,
+            trim:true,
+            index:true,
 
         },
         email : {
             type : String,
             required : true,
+             unique : true,
+            lowercase : true,
+            trim:true,
+            index:true,
 
         },
-        username :{
+        fullName :{
             type :String,
-            required : true
+            required : true,
+            trim:true,
+            index:true,
         },
         password :{
             type : String,
-            required :true
+            required :[true,'Password is required'],
+        },
+        avatar : {
+            type : String, // cloudnary services we use
+            required : true,
+            // default : "https://res.cloudinary.com/dzj8q4l9c/image/upload/v1700000000/default-avatar.png"
+        },
+        coverImage : {
+            type : String, // cloudnary services we use 
+            required : true,
+            // default : "https://res.cloudinary.com/dzj8q4l9c/image/upload/v1700000000/default-cover.jpg"
+        },
+        watchHistroy : [
+            {
+                type : mongoose.Schema.Types.ObjectId, 
+                ref : "Video",
+            }
+        ],
+        refreshToken:{
+            type : String,
         }
     },
     {timestamps:true}
 )
 
+
+userSchema.pre("save", async function (next) {
+    // there is problem that how many data saved , this function saves or encrypt the passoword
+    if(!this.isModified("password")) return next();
+    this.password = bcrypt.hash(this.password,10)
+    next()
+})
+
+//csutom models
+userSchema.methods.isPasswordCorrect = async function (password)
+{
+   return await bcrypt.compare(password,this.password)
+}
+
+userSchema.methods.generateAccessToken = async function ()
+{
+    return jwt.sign(
+        {
+            _id : this._id,
+            email:this.email,
+            username:this.username,
+            fullName : this.fullName,
+        },
+        process.env.Access_Token_Secret,
+        {
+            expiresIn:process.env.Access_Token_Expiry
+        }
+   ) 
+}
+userSchema.methods.generateRefreshToken = async function ()
+{
+   return jwt.sign(
+        {
+            _id : this._id,
+            
+        },
+        process.env.Refresh_Token_Secret,
+        {
+            expiresIn:process.env.Refresh_Token_Expiry
+        }
+   )
+}
+
+
 export const User =  new mongoose.models("User",userSchema)
+
+// direct encryption is not possible so we use bcryptjs to hash the password and for token management we use jwt token and we have to use mongoose hooks
