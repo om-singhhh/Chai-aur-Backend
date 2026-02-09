@@ -70,6 +70,36 @@ userSchema.methods.isPasswordCorrect = async function (password)
    return await bcrypt.compare(password,this.password)
 }
 
+userSchema.methods.generateAccessToken = async function ()
+{
+    return jwt.sign(
+        {
+            _id : this._id,
+            email:this.email,
+            username:this.username,
+            fullName : this.fullName,
+        },
+        process.env.Access_Token_Secret,
+        {
+            expiresIn:process.env.Access_Token_Expiry
+        }
+   ) 
+}
+userSchema.methods.generateRefreshToken = async function ()
+{
+   return jwt.sign(
+        {
+            _id : this._id,
+            
+        },
+        process.env.Refresh_Token_Secret,
+        {
+            expiresIn:process.env.Refresh_Token_Expiry
+        }
+   )
+}
+
+
 export const User =  new mongoose.models("User",userSchema)
 
 // direct encryption is not possible so we use bcryptjs to hash the password and for token management we use jwt token and we have to use mongoose hooks
